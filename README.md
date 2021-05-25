@@ -24,7 +24,7 @@ At this point you have a file with the register report.
 10. Run the following commands (assuming you're in some c:\temp directory) to create the SQLite3 database table:
 
 ```
-c:>\temp>lua quicken_register.lua report.txt
+c:>\temp>lua quicken_register.lua report.txt > import.txt
 c:>\temp>sqlite3 quicken.db
 sqlite>CREATE TABLE IF NOT EXISTS quicken(
    ...>  dt text not null default(date())
@@ -37,7 +37,7 @@ sqlite>CREATE TABLE IF NOT EXISTS quicken(
    ...>  clr text collate nocase,
    ...>  amount float not null
    ...>  );
-sqlite>.import quicken report.txt
+sqlite>.import quicken import.txt
 ```
 
 to import to a new SQLite3 database, or
