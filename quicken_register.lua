@@ -147,18 +147,8 @@ DROP TABLE IF EXISTS quicken;
 end
 
 --------------------------------------------------------------------------------
-if as_sql then print([[
-CREATE TABLE IF NOT EXISTS quicken(
-  dt text not null default(date())
-    check (dt is date(dt,'+0 days')),
-  acct text not null collate nocase,
-  num text collate nocase,
-  payee text not null collate nocase,
-  memo text collate nocase,
-  category text collate nocase,
-  clr text collate nocase,
-  amount float not null
-  );
+if as_sql then print(f[[
+{CREATE_SQL}
 BEGIN;]])
 end
 do_work()
