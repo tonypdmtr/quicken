@@ -3,25 +3,42 @@
 -- to some text file into SQLite3 .import ready file for quicken table
 -- Written by Tony G. Papadimitriou <tonyp@acm.org> on 2021-05-25
 -- Placed in the Public Domain
+-- History --
+-- 2021-05-25 Original
+-- 2022-01-20 BugFix: SQL version did not include memo field
+--            BugFix: SQL version did not use CREATE_SQL constant
+--            Split pattern (PAT) into multiple lines for readability
+--            Made tab pattern a separate constant (TAB) for easier editing, if needed
+--            Attempted UNIQUE constraint but left as comment as exported file is not necessarily unique
 --==============================================================================
-
-require 'f_string'
 
 CREATE_SQL = [[
 CREATE TABLE IF NOT EXISTS quicken(
-  dt text not null default(date())
+  dt text not null default(date())                --date of event
     check (dt is date(dt,'+0 days')),
-  acct text not null collate nocase,
-  num text collate nocase,
-  payee text not null collate nocase,
-  memo text collate nocase,
-  category text collate nocase,
-  clr text collate nocase,
-  amount float not null
+  acct text not null collate nocase,              --account to use
+  num text collate nocase,                        --transaction number
+  payee text not null collate nocase,             --payee
+  memo text null collate nocase,                  --memo
+  tag text null collate nocase,                   --tag
+  category text null collate nocase,              --category
+  clr text null collate nocase,                   --cleared payment flag
+  amount float not null                           --signed amount
+  --, unique (dt,acct,payee,memo,tag,category,amount)
   );
 ]]
 
-PAT = '^[\t|]?(%d+/%d+/%d+)[\t|](.-)[\t|](.-)[\t|](.-)[\t|](.-)[\t|](.-)[\t|](.-)[\t|](.-)[\t|](%-?%d-%,?%d+%.%d%d)%s*$'
+TAB = '[\t|]'
+PAT = '^'..TAB..
+      '(%d+/%d+/%d+)'..TAB..        --dt
+      '(.-)'..TAB..                 --accnt
+      '(.-)'..TAB..                 --num
+      '(.-)'..TAB..                 --payee
+      '(.-)'..TAB..                 --memo
+      '(.-)'..TAB..                 --category
+      '(.-)'..TAB..                 --tag
+      '(.-)'..TAB..                 --clr
+      '(%-?%d-%,?%d+%.%d%d)%s*$'    --amount
 EOL = '~~~LF~~~'
 DELIMITER = '|'
 
@@ -59,11 +76,12 @@ function pl()
     ans.acct = n(ans.acct)
     ans.num = n(ans.num)
     ans.payee = n(ans.payee)
+    ans.memo = n(ans.memo)
     ans.category = n(ans.category)
     ans.tag = n(ans.tag)
     ans.clr = n(ans.clr)
     ans.amount = n(ans.amount)
-    print(f'INSERT INTO quicken VALUES({ans.dt},{ans.acct},{ans.num},{ans.payee},{ans.category},{ans.tag},{ans.clr},{ans.amount});')
+    print(f'INSERT INTO quicken VALUES({ans.dt},{ans.acct},{ans.num},{ans.payee},{ans.memo},{ans.category},{ans.tag},{ans.clr},{ans.amount});')
   else
     print(ans.dt .. DELIMITER ..
           ans.acct .. DELIMITER ..
@@ -147,10 +165,7 @@ DROP TABLE IF EXISTS quicken;
 end
 
 --------------------------------------------------------------------------------
-if as_sql then print(f[[
-{CREATE_SQL}
-BEGIN;]])
-end
+if as_sql then print(CREATE_SQL .. 'BEGIN;') end
 do_work()
 pl()
 if as_sql then print('END;') end
